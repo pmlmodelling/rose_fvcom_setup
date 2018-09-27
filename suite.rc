@@ -1,0 +1,212 @@
+#!jinja2
+[cylc]
+	UTC mode = True # Ignore DST
+	abort if any task fails = False
+
+[scheduling]
+	initial cycle point = 2018-09-20T00:00:00Z
+	final cycle point = +P5D
+	[[special tasks]]
+		clock-trigger = start_cycle(PT0M)
+	[[dependencies]]
+		[[[R1]]]
+			graph = """
+					copy_common_to_remote => softlink_forcing_remote
+					write_run_namelist => hot_cold_start => run_fvcom
+					"""
+		[[[P1D]]]
+			graph = """
+					run_fvcom[-P1D] =>  start_cycle => softlink_forcing  & softlink_forcing_remote => write_run_namelist
+
+{% if FORECAST and (WIND_ON == 'T' or HEATING_ON == 'T' or PRECIPITATION_ON == 'T' or AIR_PRESSURE_ON == 'T') %}
+				start_cycle => wrf_suite_trigger <rose_wrf::transfer_for_fvcom> => get_wrf_file => write_run_namelist
+{% endif %}
+
+{% if BOUNDARY_FORCING == 'TIDAL' %}
+					start_cycle => generate_tide_forcing => write_run_namelist
+{% elif BOUNDARY_FORCING == 'CMEMS' %}
+					start_cycle => get_CMEMS_data => generate_CMEMS_nest => write_run_namelist
+{% elif BOUNDARY_FORCING == 'NEST_FILE' %}
+					start_cycle => nest_suite_trigger<{{NEST_RUN_SUITE}}::transfer_data> => get_nest_file => write_run_namelist
+{% endif %}
+
+{% if RIVER_MODEL == 'NEURAL_NET' %}
+					start_cycle => wrf_archive_trigger <rose_wrf::cycle_finished> & update_river_model & softlink_forcing => generate_rivers 
+					generate_rivers => mv_river_files => write_river_number
+					write_run_namelist => write_river_number => run_fvcom
+{% elif RIVER_MODEL == 'CLIMATOLOGY' %}
+					start_cycle => get_river_files => write_run_namelist => write_river_number => run_fvcom
+{% endif %}
+
+{%- if SEDIMENT %}
+					write_cstms_namelist => run_fvcom
+{%- endif %}
+
+					write_run_namelist => run_fvcom => transfer_data
+					"""
+		[[[+P1D/P1D]]]
+			graph = """
+					run_fvcom[-P1D] => transfer_restart => run_fvcom
+					"""
+
+[runtime]
+	[[root]]
+		env-script = eval $(rose task-env --cycle-offset=P1D)
+		script = rose task-run --verbose
+		[[[job]]]
+			execution time limit = PT3H
+		[[[events]]]
+			mail events = submission timeout, execution timeout
+			submission timeout = P1D
+		[[[environment]]]
+			START_DATE=$(rose date --print-format='%Y-%m-%d %H:%M:%S' $CYLC_TASK_CYCLE_POINT)
+			END_DATE=$(rose date --offset=P1D --print-format='%Y-%m-%d %H:%M:%S' $CYLC_TASK_CYCLE_POINT)
+			START_DATE_STR=$(rose date --print-format='%Y-%m-%d_%H:%M:%S' $CYLC_TASK_CYCLE_POINT)
+			END_DATE_STR=$(rose date --offset=P1D --print-format='%Y-%m-%d_%H:%M:%S' $CYLC_TASK_CYCLE_POINT)
+			START_DAY=$(rose date --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
+			END_DAY=$(rose date --offset=P1D --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
+
+			GRID_NAME={{GRID_NAME}}
+			RIVER_MODEL_PATH={{RIVER_MODEL_PATH}}
+			REMOTE_TRANSFER_DIR={{REMOTE_TRANSFER_DIR}}
+
+			HARMONICS_FILE_PATH={{HARMONICS_FILE_PATH}}
+			CMEMS_DATA_DIR={{CMEMS_DATA_DIR}}
+			NEST_RUN_SUITE={{NEST_RUN_SUITE}}
+			NEST_INTERVAL={{NEST_INTERVAL}}
+
+			EXT_TSTEP={{EXT_TSTEP}}
+			ISPLIT={{ISPLIT}}
+			STARTUP_DMAX={{STARTUP_DMAX}}
+			HORIZONTAL_MIXING_COEFFICIENT={{HORIZONTAL_MIXING_COEFFICIENT}}
+			VERTICAL_MIXING_COEFFICIENT={{VERTICAL_MIXING_COEFFICIENT}}
+			COORDINATES={{COORDINATES}}
+			WIND_ON={{WIND_ON}}
+			HEATING_ON={{HEATING_ON}}
+			PRECIPITATION_ON={{PRECIPITATION_ON}}
+			AIR_PRESSURE_ON={{AIR_PRESSURE_ON}}
+
+			WRF_FORECAST_FILE_DIR=/gpfs1/users/modellers/mbe/rose_run_wrf_temp
+			WRF_ARCHIVE_DIR_PICA=/data/sthenno1/backup/pica/models/WRF/wrf-preprocess-gfs/output
+			WRF_ARCHIVE_DIR=/data/sthenno1/backup/mbe/Code/fvcom-projects/mycoast/run/rose_output
+			COMMON_FILES_PATH={{COMMON_FILES_PATH}}
+{%- if BOUNDARY_FORCING == 'TIDAL' %}
+			ELEV_FORCE='T'
+{%- else %}
+			ELEV_FORCE='F'
+{%- endif %}
+
+	[[slurm_job]]
+		[[[job]]]
+			batch system = slurm
+			submission polling intervals = PT10S
+			execution polling intervals = PT10S, PT1M
+		[[[directives]]]
+			--nodes = {{NO_NODES}}
+			--ntasks-per-node=20
+			--threads-per-core=1
+			--time=24:00:00
+{%- if USE_CETO %}
+		[[[remote]]]
+			host = login.ceto.npm.ac.uk
+			owner = mbe
+{%- endif %}
+	[[slurm_job_1]]
+		inherit = slurm_job
+		[[[directives]]]
+			--nodes = 1
+			--ntasks-per-node = 1
+			--threads-per-core=1
+			--time=24:00:00
+	[[remote_job]]
+{%- if USE_CETO %}
+		[[[remote]]]
+			host = login.ceto.npm.ac.uk
+			owner = mbe
+{%- endif %}
+
+
+	[[write_run_namelist]]
+		inherit = slurm_job_1
+{%- if SEDIMENT %}
+	[[write_run_cstms]]
+{%- endif %}
+
+	[[copy_common_to_remote]]
+		inherit = remote_job
+    [[softlink_forcing]]
+    [[softlink_forcing_remote]]
+        inherit = slurm_job_1
+	
+	[[wrf_suite_trigger]]
+		script =""
+		[[[suite state polling]]]
+			interval = PT1M
+			max-polls = 1440
+		[[[job]]]
+			execution retry delays = 3*PT15M
+	[[get_wrf_file]]
+		inherit = slurm_job_1
+
+
+	[[generate_tide_forcing]]
+		inherit = slurm_job_1
+	[[get_CMEMS_data]]
+		inherit = slurm_job_1
+	[[generate_CMEMS_nest]]
+		inherit = slurm_job_1
+	[[nest_suite_trigger]]
+		script =""
+		[[[suite state polling]]]
+			interval = PT1M
+			max-polls = 1440
+	[[get_nest_file]]
+		inherit = slurm_job_1
+
+	[[wrf_archive_trigger]]
+		script =""
+		[[[suite state polling]]]
+			interval = PT1M
+			max-polls = 1440
+		[[[job]]]
+			execution retry delays = 3*PT15M
+	[[update_river_model]]
+	[[generate_rivers]]
+	[[get_river_files]]
+		inherit = slurm_job_1
+	[[mv_river_files]]
+		inherit = remote_job
+	[[write_river_number]]
+		inherit = slurm_job_1
+		script = """
+				NO_RIVERS=$(grep "&NML_RIVER" ${ROSE_DATAC}/${GRID_NAME}_riv.nml | wc -l);
+				sed -i "s|.*RIVER_NUMBER.*| RIVER_NUMBER  = ${NO_RIVERS},|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
+				"""
+
+	[[run_fvcom]]
+		inherit = slurm_job
+	[[hot_cold_start]]
+		inherit = remote_job
+{%- if COLD_START %}
+		script = """
+			sed -i "s|.*STARTUP_TYPE.*|STARTUP_TYPE = 'coldstart',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
+			sed -i "s|.*STARTUP_FILE.*|STARTUP_FILE = 'none',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
+			sed -i "s|.*STARTUP_UV_TYPE.*|STARTUP_UV_TYPE   = 'default',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
+			sed -i "s|.*STARTUP_TURB_TYPE.*|STARTUP_TURB_TYPE = 'default',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
+			sed -i "s|.*STARTUP_TS_TYPE.*|STARTUP_TS_TYPE   = 'constant',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
+	{%- if SEDIMENT %}
+			sed -i "s|.*SED_HOT_START.*|SED_HOT_START = F|" ${ROSE_DATAC}/cstms_sediment.inp
+	{%- endif %}
+			"""
+{%- endif %}
+	[[transfer_data]]
+		inherit = slurm_job_1
+	[[start_cycle]]
+		script = """
+			echo "starting forecast cycle"
+			"""
+	[[transfer_restart]]
+		inherit = slurm_job
+		script = """
+			ln -s ${ROSE_DATACP1D}/output/${GRID_NAME}_restart_0001.nc ${ROSE_DATAC}/${GRID_NAME}_restart_0001.nc
+			"""

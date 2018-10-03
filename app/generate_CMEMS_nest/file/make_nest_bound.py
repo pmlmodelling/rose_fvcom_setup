@@ -6,19 +6,18 @@ import sys
 
 import PyFVCOM as pf
 
-#"""
+"""
 cmems_data_dir = '/data/sthenno1/backup/mbe/Data/CMEMS'
-start_date = dt.datetime(2018,9,19)
-end_date = dt.datetime(2018,9,20)
+start_date = dt.datetime(2018,9,26)
+end_date = dt.datetime(2018,9,27)
 grid = 'tamar_v2_grd.dat'
 sigma_file = 'sigma_gen.dat'
 native_coordinates = 'cartesian'
 fvcom_harmonics = '/data/sthenno1/backup/mbe/Data/harmonics_files/tamar_2006_harmonics.nc'
 interval = 1/24 
 
-#"""
-
 """
+
 cmems_data_dir = sys.argv[1]
 start_date = dt.datetime.strptime(sys.argv[2], '%Y-%m-%d')
 end_date = dt.datetime.strptime(sys.argv[3], '%Y-%m-%d')
@@ -27,13 +26,10 @@ sigma_file = sys.argv[5]
 native_coordinates = sys.argv[6]
 fvcom_harmonics = sys.argv[7]
 interval = 1/float(sys.argv[8])
-"""
-
 
 constituents = ['M2', 'S2']
 output_file = 'boundary_nest.nc'.format(grid)
 cmems_time_res = 'hi'
-
 
 ##############################################################################################
 # Setup preproc Model object

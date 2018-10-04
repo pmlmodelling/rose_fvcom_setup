@@ -53,7 +53,7 @@ obc_file = common_dir + '/' + grid_name + '_obc.dat'
 output_file = grid_name + '_riv.nc'
 output_file_nml = grid_name + '_riv.nml'
 
-positions, names, times, flux_array, temperature, salinity, ersem_dict = fr.get_pyfvcom_prep(river_list, start_date, end_date, ersem=False, noisy=True)
+positions, names, times, flux_array, temperature, salinity, ersem_dict, sediment_dict = fr.get_pyfvcom_prep(river_list, start_date, end_date, ersem=False, noisy=True)
 
 salinity = np.ones(salinity.shape)
 flux_array[flux_array < 0] = 0

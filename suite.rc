@@ -4,7 +4,7 @@
 	abort if any task fails = False
 
 [scheduling]
-	initial cycle point = 2018-10-03T00:00:00Z
+	initial cycle point = 2018-10-04T00:00:00Z
 	final cycle point = +P5D
 	[[special tasks]]
 		clock-trigger = start_cycle(PT0M)
@@ -102,7 +102,7 @@
 			submission polling intervals = PT10S
 			execution polling intervals = PT10S, PT1M
 		[[[directives]]]
-			--nodes = {{NO_NODES}}
+			--nodes = {{MIN_NODES}}-{{MAX_NODES}}
 			--ntasks-per-node=20
 			--threads-per-core=1
 			--time=24:00:00

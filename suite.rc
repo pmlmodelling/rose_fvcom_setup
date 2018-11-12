@@ -4,8 +4,8 @@
 	abort if any task fails = False
 
 [scheduling]
-	initial cycle point = 2018-10-04T00:00:00Z
-	final cycle point = +P5D
+	initial cycle point = {{INITIAL_START_DATE}}
+	final cycle point = {{FINAL_CYCLE_POINT}}
 	[[special tasks]]
 		clock-trigger = start_cycle(PT0M)
 	[[dependencies]]
@@ -86,9 +86,9 @@
 			PRECIPITATION_ON={{PRECIPITATION_ON}}
 			AIR_PRESSURE_ON={{AIR_PRESSURE_ON}}
 
-			WRF_FORECAST_FILE_DIR=/gpfs1/users/modellers/mbe/rose_run_wrf_temp
-			WRF_ARCHIVE_DIR_PICA=/data/sthenno1/backup/pica/models/WRF/wrf-preprocess-gfs/output
-			WRF_ARCHIVE_DIR=/data/sthenno1/backup/mbe/Code/fvcom-projects/mycoast/run/rose_output
+			WRF_FORECAST_FILE_DIR={{WRF_FORECAST_FILE_DIR}}
+			WRF_ARCHIVE_DIR_PICA={{WRF_ARCHIVE_DIR_PICA}}
+			WRF_ARCHIVE_DIR={{WRF_ARCHIVE_DIR}}
 			COMMON_FILES_PATH={{COMMON_FILES_PATH}}
 {%- if BOUNDARY_FORCING == 'TIDAL' %}
 			ELEV_FORCE='T'

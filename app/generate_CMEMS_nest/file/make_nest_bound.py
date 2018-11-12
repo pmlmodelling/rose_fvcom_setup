@@ -76,12 +76,10 @@ for this_fvcom, this_var in fvcom_cmems_names.items():
 		for this_file in cmems_file_list[1:]:
 			this_data_reader += reg_reader(this_file, [this_var[1]])
 
-	aqua_prep.add_nests_regular(this_fvcom, this_data_reader, this_var[1], constrain_coordinates=False)
+	aqua_prep.add_nests_regular(this_fvcom, this_data_reader, this_var[1], constrain_coordinates=True)
 
 # Depth avg the velocities
 aqua_prep.avg_nest_force_vel()
 
 # Write the forcing file 
-
 aqua_prep.write_nested_forcing(output_file, adjust_tides=['zeta', 'u', 'v', 'ua', 'va'])
-

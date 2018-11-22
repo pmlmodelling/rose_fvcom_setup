@@ -25,7 +25,7 @@
 {% if BOUNDARY_FORCING == 'TIDAL' %}
 					start_cycle => generate_tide_forcing => write_run_namelist
 {% elif BOUNDARY_FORCING == 'CMEMS' %}
-					start_cycle => get_CMEMS_data => generate_CMEMS_nest => copy_CMEMS_nest_to_remote => write_run_namelist
+					start_cycle => CMEMS_download_trigger <download::get_CMEMS_data> => generate_CMEMS_nest => copy_CMEMS_nest_to_remote => write_run_namelist
 {% elif BOUNDARY_FORCING == 'NEST_FILE' %}
 					start_cycle => nest_suite_trigger<{{NEST_RUN_SUITE}}::transfer_data> => get_nest_file => write_run_namelist
 {% endif %}
@@ -56,7 +56,8 @@
 		[[[job]]]
 			execution time limit = PT3H
 		[[[events]]]
-			mail events = submission timeout, execution timeout
+			mail events = submission timeout, execution timeout, failed
+			mail to = {{MAIL_TO}}
 			submission timeout = P1D
 		[[[environment]]]
 			START_DATE=$(rose date --print-format='%Y-%m-%d %H:%M:%S' $CYLC_TASK_CYCLE_POINT)
@@ -151,7 +152,13 @@
 
 	[[generate_tide_forcing]]
 		inherit = slurm_job_1
-	[[get_CMEMS_data]]
+    [[CMEMS_download_trigger]]
+        script =""
+        [[[suite state polling]]]
+            interval = PT1M
+            max-polls = 1440
+        [[[job]]]
+            execution retry delays = 3*PT15M
 	[[generate_CMEMS_nest]]
 	[[copy_CMEMS_nest_to_remote]]
 		inherit = remote_job

@@ -112,7 +112,7 @@
 {%- if USE_CETO %}
 		[[[remote]]]
 			host = login.ceto.npm.ac.uk
-			owner = mbe
+			owner = {{REMOTE_USER}}
 {%- endif %}
 	[[slurm_job_1]]
 		inherit = slurm_job

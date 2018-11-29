@@ -5,7 +5,9 @@
 
 [scheduling]
 	initial cycle point = {{INITIAL_START_DATE}}
+{% if FINAL_CYCLE_POINT != 'NONE' %}
 	final cycle point = {{FINAL_CYCLE_POINT}}
+{% endif %}
 	[[special tasks]]
 		clock-trigger = start_cycle(PT0M)
 	[[dependencies]]

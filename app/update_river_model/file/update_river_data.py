@@ -39,8 +39,8 @@ else:
             else:
                 print(this_date)
             this_date_m1 = this_date - dt.timedelta(days=int(this_missing_loop))
-            this_date_str = this_date_m1.strftime('%Y%m%d')
-            potential_files = gb.glob('{}/{}*_forecast/wrfout_d03*'.format(wrf_forecast_out_dir, this_date_str))
+            this_date_str = this_date_m1.strftime('%Y-%m-%d')
+            potential_files = gb.glob('{}/{}/wrfout_d03*'.format(wrf_forecast_out_dir, this_date_str))
 
             try:
                 this_wrf_nc = nc.Dataset(potential_files[-1], 'r')

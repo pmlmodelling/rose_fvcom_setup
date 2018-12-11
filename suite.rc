@@ -102,6 +102,16 @@
 			ELEV_FORCE='F'
 {%- endif %}
 
+
+{%- if BOUNDARY_FORCING in ['CMEMS', 'NEST_FILE'] %}
+                        NEST_ON='T'
+			NEST_TYPE='3'
+{%- else %}
+                        NEST_ON='T'
+			NEST_TYPE='3'
+{%- endif %}
+
+
 	[[slurm_job]]
 		[[[job]]]
 			batch system = slurm

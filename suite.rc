@@ -26,10 +26,15 @@
 					start_cycle => get_archive_wrf_file => convert_wrf_file => write_run_namelist
 {% endif %}
 
+
 {% if BOUNDARY_FORCING == 'TIDAL' %}
 					start_cycle => generate_tide_forcing => write_run_namelist
-{% elif BOUNDARY_FORCING == 'CMEMS' %}
+{% elif BOUNDARY_FORCING == 'CMEMS' and FORECAST %}
 					start_cycle => CMEMS_download_trigger <download::get_CMEMS_data:finish> => generate_CMEMS_nest => copy_CMEMS_nest_to_remote => write_run_namelist
+
+{% elif BOUNDARY_FORCING == 'CMEMS' %}
+                                        start_cycle => generate_CMEMS_nest => copy_CMEMS_nest_to_remote => write_run_namelist
+
 {% elif BOUNDARY_FORCING == 'NEST_FILE' %}
 					start_cycle => nest_suite_trigger<{{NEST_RUN_SUITE}}::transfer_data> => get_nest_file => write_run_namelist
 {% endif %}

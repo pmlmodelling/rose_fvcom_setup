@@ -1,0 +1,2 @@
+[command]
+default = cp /pml${WRF_FORECAST_FILE_DIR}/*${WRF_ARCHIVE_DATESTR}*/wrfout_d03_* ${ROSE_DATAC}/raw_wrf_file.nc

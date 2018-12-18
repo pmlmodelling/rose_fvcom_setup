@@ -32,7 +32,7 @@
 					start_cycle => nest_suite_trigger<{{NEST_RUN_SUITE}}::transfer_data> => get_nest_file => write_run_namelist
 {% endif %}
 
-{% if RIVER_MODEL == 'NEURAL_NET' %}
+{% if RIVER_MODEL == 'NEURAL_NET' and FORECAST %}
 					start_cycle => wrf_archive_trigger <wrf::cycle_finished> & update_river_model & softlink_forcing => generate_rivers 
 
 					generate_rivers:failed => trigger_archive_wrf & write_empty_river_nml
@@ -40,6 +40,9 @@
 					generate_rivers:succeeded | write_empty_river_nml => mv_river_files => write_river_number
 
 					write_run_namelist => write_river_number => run_fvcom
+{% elif RIVER_MODEL == 'NEURAL_NET' %}
+					softlink_forcing => generate_rivers => mv_river_files
+					mv_river_files & write_run_namelist => write_river_number => run_fvcom
 {% elif RIVER_MODEL == 'CLIMATOLOGY' %}
 					start_cycle => get_river_files => write_run_namelist => write_river_number => run_fvcom
 {% endif %}
@@ -100,6 +103,15 @@
 			WRF_FORECAST_FILE_DIR={{WRF_FORECAST_FILE_DIR}}
 			WRF_ARCHIVE_DIR={{WRF_ARCHIVE_DIR}}
 			COMMON_FILES_PATH={{COMMON_FILES_PATH}}
+                        WRF_ARCHIVE_DATESTR=$(rose date --print-format={{WRF_ARCHIVE_DATEFMT}} $CYLC_TASK_CYCLE_POINT)
+
+{% if FORECAST %}
+                        TODAY_WRF_FILE=/{{WRF_ARCHIVE_DIR}}/today/today_wrfout.nc
+{% else %}
+			TODAY_WRF_FILE='hindcast'
+{% endif %}
+
+
 {%- if BOUNDARY_FORCING == 'TIDAL' %}
 			ELEV_FORCE='T'
 {%- else %}

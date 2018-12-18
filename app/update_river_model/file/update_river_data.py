@@ -9,7 +9,8 @@ import fvcom_river as fr
 
 
 wrf_forecast_out_dir = sys.argv[1]
-end_date = dt.datetime.strptime(sys.argv[2],'%Y-%m-%d')
+wrf_forecast_out_dir_strfmt = sys.argv[2]
+end_date = dt.datetime.strptime(sys.argv[3],'%Y-%m-%d')
 no_miss_loops = 4
 
 # Load the river model
@@ -39,8 +40,8 @@ else:
             else:
                 print(this_date)
             this_date_m1 = this_date - dt.timedelta(days=int(this_missing_loop))
-            this_date_str = this_date_m1.strftime('%Y-%m-%d')
-            potential_files = gb.glob('{}/{}/wrfout_d03*'.format(wrf_forecast_out_dir, this_date_str))
+            this_date_str = this_date_m1.strftime(wrf_forecast_out_dir_strfmt)
+            potential_files = gb.glob('{}/*{}*/wrfout_d03*'.format(wrf_forecast_out_dir, this_date_str))
 
             try:
                 this_wrf_nc = nc.Dataset(potential_files[-1], 'r')

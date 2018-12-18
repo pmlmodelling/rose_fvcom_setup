@@ -53,7 +53,13 @@
 					write_cstms_namelist => run_fvcom
 {%- endif %}
 
+{% if FORECAST %} 
+					write_run_namelist => run_fvcom => transfer_data_today => transfer_data
+{% else %}
 					write_run_namelist => run_fvcom => transfer_data
+{% endif %}
+
+
 					"""
 		[[[+P1D/P1D]]]
 			graph = """
@@ -257,6 +263,8 @@
 			"""
 {%- endif %}
 	[[transfer_data]]
+		inherit = slurm_job_1
+	[[transfer_data_today]]
 		inherit = slurm_job_1
 	[[start_cycle]]
 		script = """

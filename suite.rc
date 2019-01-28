@@ -14,7 +14,12 @@
 		[[[R1]]]
 			graph = """
 					copy_common_to_remote => softlink_forcing_remote
-					write_run_namelist => hot_cold_start => run_fvcom
+{%- if COLD_START and BOUNDARY_FORCING == 'CMEMS' %}
+					write_run_namelist => adjust_namelist & generate_CMEMS_start => mv_start_file => run_fvcom
+{% elif COLD_START and BOUNDARY_FORCING == 'NEST_FILE' %}
+					write_run_namelist => adjust_namelist & generate_nest_start => mv_start_file => run_fvcom
+{%- if COLD_START %}
+
 					"""
 		[[[P1D]]]
 			graph = """
@@ -95,6 +100,7 @@
 			ARCHIVE_DIR={{ARCHIVE_DIR}}
 
 			HARMONICS_FILE_PATH={{HARMONICS_FILE_PATH}}
+			DONOR_RESTART_FILE_PATH={{DONOR_RESTART_FILE_PATH}}
 			CMEMS_DATA_DIR={{CMEMS_DATA_DIR}}
 			NEST_RUN_SUITE={{NEST_RUN_SUITE}}
 			NEST_INTERVAL={{NEST_INTERVAL}}
@@ -263,20 +269,18 @@
 
 	[[run_fvcom]]
 		inherit = slurm_job
-	[[hot_cold_start]]
+	[[adjust_namelist]]
 		inherit = remote_job
-{%- if COLD_START %}
 		script = """
-			sed -i "s|.*STARTUP_TYPE.*|STARTUP_TYPE = 'coldstart',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
-			sed -i "s|.*STARTUP_FILE.*|STARTUP_FILE = 'none',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
 			sed -i "s|.*STARTUP_UV_TYPE.*|STARTUP_UV_TYPE   = 'default',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
 			sed -i "s|.*STARTUP_TURB_TYPE.*|STARTUP_TURB_TYPE = 'default',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
-			sed -i "s|.*STARTUP_TS_TYPE.*|STARTUP_TS_TYPE   = 'constant',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
+			sed -i "s|.*STARTUP_TS_TYPE.*|STARTUP_TS_TYPE   = 'set values',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
 	{%- if SEDIMENT %}
 			sed -i "s|.*SED_HOT_START.*|SED_HOT_START = F|" ${ROSE_DATAC}/cstms_sediment.inp
 	{%- endif %}
 			"""
-{%- endif %}
+	[[generate_CMEMS_start]]
+	[[mv_start_file]]
 	[[transfer_data]]
 		inherit = slurm_job_1
 	[[transfer_data_today]]

@@ -66,7 +66,7 @@ for this_fvcom, this_var in fvcom_cmems_names.items():
 
     if len(cmems_file_list) > 1:
         for this_file in cmems_file_list[1:]:
-            this_data_reader += reg_reader(this_file, [this_var[1]])
+            this_data_reader = reg_reader(this_file, [this_var[1]]) >> this_data_reader
 
     # Interpolate onto the FVCOM grid.
     if this_fvcom in ['u', 'v']:

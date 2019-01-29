@@ -14,12 +14,11 @@
 		[[[R1]]]
 			graph = """
 					copy_common_to_remote => softlink_forcing_remote
-{%- if COLD_START and BOUNDARY_FORCING == 'CMEMS' %}
+{% if COLD_START and BOUNDARY_FORCING == 'CMEMS' %}
 					write_run_namelist => adjust_namelist & generate_CMEMS_start => mv_start_file => run_fvcom
 {% elif COLD_START and BOUNDARY_FORCING == 'NEST_FILE' %}
 					write_run_namelist => adjust_namelist & generate_nest_start => mv_start_file => run_fvcom
-{%- if COLD_START %}
-
+{% endif %}
 					"""
 		[[[P1D]]]
 			graph = """
@@ -59,9 +58,9 @@
 					start_cycle => get_river_files => write_run_namelist => write_river_number => run_fvcom
 {% endif %}
 
-{%- if SEDIMENT %}
+{% if SEDIMENT %}
 					write_cstms_namelist => run_fvcom
-{%- endif %}
+{% endif %}
 
 {% if FORECAST %} 
 					write_run_namelist => run_fvcom => transfer_data_today => transfer_data
@@ -141,20 +140,20 @@
 {% endif %}
 
 
-{%- if BOUNDARY_FORCING == 'TIDAL' %}
+{% if BOUNDARY_FORCING == 'TIDAL' %}
 			ELEV_FORCE='T'
-{%- else %}
+{% else %}
 			ELEV_FORCE='F'
-{%- endif %}
+{% endif %}
 
 
-{%- if BOUNDARY_FORCING in ['CMEMS', 'NEST_FILE'] %}
+{% if BOUNDARY_FORCING in ['CMEMS', 'NEST_FILE'] %}
                         NEST_ON='T'
 			NEST_TYPE='3'
-{%- else %}
+{% else %}
                         NEST_ON='T'
 			NEST_TYPE='3'
-{%- endif %}
+{% endif %}
 
 
 	[[slurm_job]]
@@ -167,11 +166,11 @@
 			--ntasks-per-node=20
 			--threads-per-core=1
 			--time=24:00:00
-{%- if USE_CETO %}
+{% if USE_CETO %}
 		[[[remote]]]
 			host = login.ceto.npm.ac.uk
 			owner = {{REMOTE_USER}}
-{%- endif %}
+{% endif %}
 	[[slurm_job_1]]
 		inherit = slurm_job
 		[[[directives]]]
@@ -180,23 +179,28 @@
 			--threads-per-core=1
 			--time=24:00:00
 	[[remote_job]]
-{%- if USE_CETO %}
+{% if USE_CETO %}
 		[[[remote]]]
 			host = login.ceto.npm.ac.uk
 			owner = {{REMOTE_USER}}
-{%- endif %}
+{% endif %}
 
 
 	[[write_run_namelist]]
 		inherit = slurm_job_1
-{%- if SEDIMENT %}
+{% if SEDIMENT %}
 	[[write_run_cstms]]
-{%- endif %}
+{% endif %}
+
+	[[check_output_dir_len]]
+                script = """
+                        echo "Need to check suite name doesn't take the fvcom output dir over the max length"
+                        """
 
 	[[copy_common_to_remote]]
 		inherit = remote_job
-    [[softlink_forcing]]
-    [[softlink_forcing_remote]]
+	[[softlink_forcing]]
+	[[softlink_forcing_remote]]
         inherit = slurm_job_1
 	
 	[[wrf_suite_trigger]]
@@ -275,12 +279,13 @@
 			sed -i "s|.*STARTUP_UV_TYPE.*|STARTUP_UV_TYPE   = 'default',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
 			sed -i "s|.*STARTUP_TURB_TYPE.*|STARTUP_TURB_TYPE = 'default',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
 			sed -i "s|.*STARTUP_TS_TYPE.*|STARTUP_TS_TYPE   = 'set values',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
-	{%- if SEDIMENT %}
+{% if SEDIMENT %}
 			sed -i "s|.*SED_HOT_START.*|SED_HOT_START = F|" ${ROSE_DATAC}/cstms_sediment.inp
-	{%- endif %}
+{% endif %}
 			"""
 	[[generate_CMEMS_start]]
 	[[mv_start_file]]
+		inherit = remote_job
 	[[transfer_data]]
 		inherit = slurm_job_1
 	[[transfer_data_today]]

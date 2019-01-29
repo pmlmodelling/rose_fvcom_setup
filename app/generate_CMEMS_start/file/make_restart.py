@@ -2,6 +2,7 @@ import multiprocessing
 import numpy as np
 import datetime as dt
 import glob as gb
+import sys
 from pathlib import Path
 
 import PyFVCOM as pf
@@ -35,7 +36,12 @@ restart.time.datetime = np.asarray([start_date])
 ref_date = dt.datetime(1858,11,17,0,0,0)
 restart.time.time = np.asarray([(start_date - ref_date).days])
 restart.time.Itime = np.asarray([(start_date - ref_date).days])
-restart.time.Times = np.asarray(['{}T00:00:00.0000000'.format(start_date.strftime('%Y-%m-%d'))])
+restart.time.Times = np.asarray(['{}T00:00:00.000000'.format(start_date.strftime('%Y-%m-%d'))])
+
+restart.replaced.append('time')
+restart.replaced.append('Itime')
+restart.replaced.append('Times')
+
 
 # We need to bracket the restart data in time with CMEMS data to ensure it interpolates properly.
 for this_fvcom, this_var in fvcom_cmems_names.items():
@@ -78,5 +84,7 @@ for this_fvcom, this_var in fvcom_cmems_names.items():
 
     restart.replace_variable_with_regular(this_fvcom, this_var[1], this_data_reader, constrain_coordinates=True, mode=this_mode)
 
+# replace Times as need to be a 26 character array
+restart.time.Times = np.asarray(list(restart.time.Times[0]))[np.newaxis,:]
 restart.write_restart('{}_restart_0001.nc'.format(grid))
 

@@ -14,7 +14,11 @@
 		[[[R1]]]
 			graph = """
 					copy_common_to_remote => softlink_forcing_remote
-					write_run_namelist => hot_cold_start => run_fvcom
+{% if COLD_START and BOUNDARY_FORCING == 'CMEMS' %}
+					write_run_namelist => adjust_namelist & generate_CMEMS_start => mv_start_file => run_fvcom
+{% elif COLD_START and BOUNDARY_FORCING == 'NEST_FILE' %}
+					write_run_namelist => adjust_namelist & generate_nest_start => mv_start_file => run_fvcom
+{% endif %}
 					"""
 		[[[P1D]]]
 			graph = """
@@ -54,15 +58,16 @@
 					start_cycle => get_river_files => write_run_namelist => write_river_number => run_fvcom
 {% endif %}
 
-{%- if SEDIMENT %}
+{% if SEDIMENT %}
 					write_cstms_namelist => run_fvcom
-{%- endif %}
+{% endif %}
 
 {% if FORECAST %} 
 					write_run_namelist => run_fvcom => transfer_data_today => transfer_data
 {% else %}
 					write_run_namelist => run_fvcom => transfer_data
 {% endif %}
+					run_fvcom => nan_check & plot_sst
 
 
 					"""
@@ -93,8 +98,10 @@
 			RIVER_MODEL_PATH={{RIVER_MODEL_PATH}}
 			REMOTE_TRANSFER_DIR={{REMOTE_TRANSFER_DIR}}
 			ARCHIVE_DIR={{ARCHIVE_DIR}}
+			PLOT_DIR={{PLOT_DIR}}
 
 			HARMONICS_FILE_PATH={{HARMONICS_FILE_PATH}}
+			DONOR_RESTART_FILE_PATH={{DONOR_RESTART_FILE_PATH}}
 			CMEMS_DATA_DIR={{CMEMS_DATA_DIR}}
 			NEST_RUN_SUITE={{NEST_RUN_SUITE}}
 			NEST_INTERVAL={{NEST_INTERVAL}}
@@ -135,20 +142,20 @@
 {% endif %}
 
 
-{%- if BOUNDARY_FORCING == 'TIDAL' %}
+{% if BOUNDARY_FORCING == 'TIDAL' %}
 			ELEV_FORCE='T'
-{%- else %}
+{% else %}
 			ELEV_FORCE='F'
-{%- endif %}
+{% endif %}
 
 
-{%- if BOUNDARY_FORCING in ['CMEMS', 'NEST_FILE'] %}
+{% if BOUNDARY_FORCING in ['CMEMS', 'NEST_FILE'] %}
                         NEST_ON='T'
 			NEST_TYPE='3'
-{%- else %}
+{% else %}
                         NEST_ON='T'
 			NEST_TYPE='3'
-{%- endif %}
+{% endif %}
 
 
 	[[slurm_job]]
@@ -161,11 +168,11 @@
 			--ntasks-per-node=20
 			--threads-per-core=1
 			--time=24:00:00
-{%- if USE_CETO %}
+{% if USE_CETO %}
 		[[[remote]]]
 			host = login.ceto.npm.ac.uk
 			owner = {{REMOTE_USER}}
-{%- endif %}
+{% endif %}
 	[[slurm_job_1]]
 		inherit = slurm_job
 		[[[directives]]]
@@ -174,23 +181,28 @@
 			--threads-per-core=1
 			--time=24:00:00
 	[[remote_job]]
-{%- if USE_CETO %}
+{% if USE_CETO %}
 		[[[remote]]]
 			host = login.ceto.npm.ac.uk
 			owner = {{REMOTE_USER}}
-{%- endif %}
+{% endif %}
 
 
 	[[write_run_namelist]]
 		inherit = slurm_job_1
-{%- if SEDIMENT %}
+{% if SEDIMENT %}
 	[[write_run_cstms]]
-{%- endif %}
+{% endif %}
+
+	[[check_output_dir_len]]
+                script = """
+                        echo "Need to check suite name doesn't take the fvcom output dir over the max length"
+                        """
 
 	[[copy_common_to_remote]]
 		inherit = remote_job
-    [[softlink_forcing]]
-    [[softlink_forcing_remote]]
+	[[softlink_forcing]]
+	[[softlink_forcing_remote]]
         inherit = slurm_job_1
 	
 	[[wrf_suite_trigger]]
@@ -263,20 +275,19 @@
 
 	[[run_fvcom]]
 		inherit = slurm_job
-	[[hot_cold_start]]
+	[[adjust_namelist]]
 		inherit = remote_job
-{%- if COLD_START %}
 		script = """
-			sed -i "s|.*STARTUP_TYPE.*|STARTUP_TYPE = 'coldstart',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
-			sed -i "s|.*STARTUP_FILE.*|STARTUP_FILE = 'none',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
 			sed -i "s|.*STARTUP_UV_TYPE.*|STARTUP_UV_TYPE   = 'default',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
 			sed -i "s|.*STARTUP_TURB_TYPE.*|STARTUP_TURB_TYPE = 'default',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
-			sed -i "s|.*STARTUP_TS_TYPE.*|STARTUP_TS_TYPE   = 'constant',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
-	{%- if SEDIMENT %}
+			sed -i "s|.*STARTUP_TS_TYPE.*|STARTUP_TS_TYPE   = 'set values',|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
+{% if SEDIMENT %}
 			sed -i "s|.*SED_HOT_START.*|SED_HOT_START = F|" ${ROSE_DATAC}/cstms_sediment.inp
-	{%- endif %}
+{% endif %}
 			"""
-{%- endif %}
+	[[generate_CMEMS_start]]
+	[[mv_start_file]]
+		inherit = remote_job
 	[[transfer_data]]
 		inherit = slurm_job_1
 	[[transfer_data_today]]
@@ -290,3 +301,6 @@
 		script = """
 			ln -s ${ROSE_DATACP1D}/output/${GRID_NAME}_restart_0001.nc ${ROSE_DATAC}/${GRID_NAME}_restart_0001.nc
 			"""
+	[[nan_check]]
+		inherit = remote_job
+	[[plot_sst]]	

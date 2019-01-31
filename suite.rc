@@ -67,6 +67,7 @@
 {% else %}
 					write_run_namelist => run_fvcom => transfer_data
 {% endif %}
+					run_fvcom => nan_check & plot_sst
 
 
 					"""
@@ -97,6 +98,7 @@
 			RIVER_MODEL_PATH={{RIVER_MODEL_PATH}}
 			REMOTE_TRANSFER_DIR={{REMOTE_TRANSFER_DIR}}
 			ARCHIVE_DIR={{ARCHIVE_DIR}}
+			PLOT_DIR={{PLOT_DIR}}
 
 			HARMONICS_FILE_PATH={{HARMONICS_FILE_PATH}}
 			DONOR_RESTART_FILE_PATH={{DONOR_RESTART_FILE_PATH}}
@@ -299,3 +301,6 @@
 		script = """
 			ln -s ${ROSE_DATACP1D}/output/${GRID_NAME}_restart_0001.nc ${ROSE_DATAC}/${GRID_NAME}_restart_0001.nc
 			"""
+	[[nan_check]]
+		inherit = remote_job
+	[[plot_sst]]	

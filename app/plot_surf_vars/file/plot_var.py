@@ -48,6 +48,7 @@ fname = sys.argv[1]
 var = sys.argv[2]
 clim = [float(sys.argv[3]), float(sys.argv[4])]
 
+print(fname)
 
 cmap = pt.plotting.pmlcmaps(var)
 pool_size = 4

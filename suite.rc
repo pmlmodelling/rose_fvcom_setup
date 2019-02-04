@@ -67,7 +67,8 @@
 {% else %}
 					write_run_namelist => run_fvcom => transfer_data
 {% endif %}
-					run_fvcom => nan_check & plot_sst
+					run_fvcom => nan_check 
+					transfer_data => plot_surf_vars
 
 
 					"""
@@ -303,4 +304,4 @@
 			"""
 	[[nan_check]]
 		inherit = remote_job
-	[[plot_sst]]	
+	[[plot_surf_vars]]	

@@ -21,8 +21,8 @@ start_date = end_date
 for this_river in river_dict.values():
     if hasattr(this_river, 'catchment_precipitation'):
         this_river_update = np.max(this_river.catchment_precipitation[0])
-    if this_river_update < start_date:
-        start_date = this_river_update
+        if this_river_update < start_date:
+            start_date = this_river_update
 
 
 if start_date == end_date:

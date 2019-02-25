@@ -63,10 +63,12 @@
 {% endif %}
 
 {% if FORECAST %} 
-					write_run_namelist => run_fvcom => transfer_data_today => transfer_data
+					write_run_namelist => run_fvcom => transfer_data => transfer_data_today
 {% else %}
 					write_run_namelist => run_fvcom => transfer_data
 {% endif %}
+					run_fvcom => nan_check 
+					transfer_data => plot_surf_vars
 
 
 					"""
@@ -86,17 +88,20 @@
 			mail to = {{MAIL_TO}}
 			submission timeout = P1D
 		[[[environment]]]
-			START_DATE=$(rose date --print-format='%Y-%m-%d %H:%M:%S' $CYLC_TASK_CYCLE_POINT)
-			END_DATE=$(rose date --offset=P1D --print-format='%Y-%m-%d %H:%M:%S' $CYLC_TASK_CYCLE_POINT)
-			START_DATE_STR=$(rose date --print-format='%Y-%m-%d_%H:%M:%S' $CYLC_TASK_CYCLE_POINT)
-			END_DATE_STR=$(rose date --offset=P1D --print-format='%Y-%m-%d_%H:%M:%S' $CYLC_TASK_CYCLE_POINT)
-			START_DAY=$(rose date --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
-			END_DAY=$(rose date --offset=P1D --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
+			START_DATE=$(rose date --offset=-P{{HINDCAST_DAYS|int}}D --print-format='%Y-%m-%d %H:%M:%S' $CYLC_TASK_CYCLE_POINT)
+			END_DATE=$(rose date --offset=P{{FORECAST_DAYS|int}}D --print-format='%Y-%m-%d %H:%M:%S' $CYLC_TASK_CYCLE_POINT)
+			START_DATE_STR=$(rose date --offset=-P{{HINDCAST_DAYS|int}}D --print-format='%Y-%m-%d_%H:%M:%S' $CYLC_TASK_CYCLE_POINT)
+			END_DATE_STR=$(rose date --offset=P{{FORECAST_DAYS|int}}D --print-format='%Y-%m-%d_%H:%M:%S' $CYLC_TASK_CYCLE_POINT)
+			START_DAY=$(rose date --offset=-P{{HINDCAST_DAYS|int}}D --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
+			END_DAY=$(rose date --offset=P{{FORECAST_DAYS|int}}D --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
+
+			FORECAST_DAY=$(rose date --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
 
 			GRID_NAME={{GRID_NAME}}
 			RIVER_MODEL_PATH={{RIVER_MODEL_PATH}}
 			REMOTE_TRANSFER_DIR={{REMOTE_TRANSFER_DIR}}
 			ARCHIVE_DIR={{ARCHIVE_DIR}}
+			PLOT_DIR={{PLOT_DIR}}
 
 			HARMONICS_FILE_PATH={{HARMONICS_FILE_PATH}}
 			DONOR_RESTART_FILE_PATH={{DONOR_RESTART_FILE_PATH}}
@@ -299,3 +304,6 @@
 		script = """
 			ln -s ${ROSE_DATACP1D}/output/${GRID_NAME}_restart_0001.nc ${ROSE_DATAC}/${GRID_NAME}_restart_0001.nc
 			"""
+	[[nan_check]]
+		inherit = remote_job
+	[[plot_surf_vars]]	

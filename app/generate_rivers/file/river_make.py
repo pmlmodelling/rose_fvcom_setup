@@ -52,7 +52,7 @@ for this_river in river_list:
     try:
         this_river._expandDateSeries(start_date, end_date)
     except:
-        pass
+        this_river.use_ltls_temp = False
 
 # Get and write out the forecast predictions
 grid = common_dir + '/' + grid_name + '_grd.dat'
@@ -72,3 +72,5 @@ aqua_prep.add_rivers(positions, names, times, flux_array, temperature, salinity,
 aqua_prep.check_rivers(max_discharge=400, min_depth=None, open_boundary_proximity=None, noisy=False)
 aqua_prep.write_river_forcing(output_file, ersem=False)
 aqua_prep.write_river_namelist(output_file_nml, output_file, vertical_distribution='uniform')
+
+

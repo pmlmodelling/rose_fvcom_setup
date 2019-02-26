@@ -174,7 +174,7 @@
 			submission polling intervals = PT10S
 			execution polling intervals = PT10S, PT1M
 		[[[directives]]]
-			--nodes = {{MIN_NODES}}-{{MAX_NODES}}
+			--nodes = {{NODES}}
 			--ntasks-per-node=20
 			--threads-per-core=1
 			--time=24:00:00

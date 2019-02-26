@@ -25,7 +25,14 @@
 					run_fvcom[-P1D] =>  start_cycle => softlink_forcing  & softlink_forcing_remote => write_run_namelist
 
 {% if FORECAST and (WIND_ON == 'T' or HEATING_ON == 'T' or PRECIPITATION_ON == 'T' or AIR_PRESSURE_ON == 'T') %}
-					start_cycle => wrf_suite_trigger <wrf::transfer_for_fvcom> => get_wrf_file => write_run_namelist
+					start_cycle => wrf_suite_trigger <wrf::transfer_for_fvcom> 
+					wrf_suite_trigger <wrf::transfer_for_fvcom>:succeeded & softlink_forcing_remote => get_wrf_file
+					wrf_suite_trigger <wrf::transfer_for_fvcom>:failed | get_wrf_file => write_run_namelist
+					wrf_suite_trigger <wrf::transfer_for_fvcom>:succeeded => !adjust_namelist_met
+					wrf_suite_trigger <wrf::transfer_for_fvcom>:failed & write_run_namelist => adjust_namelist_met
+					(wrf_suite_trigger <wrf::transfer_for_fvcom>:succeeded & write_run_namelist) | adjust_namelist_met => run_fvcom
+
+
 {% elif WIND_ON == 'T' or HEATING_ON == 'T' or PRECIPITATION_ON == 'T' or AIR_PRESSURE_ON == 'T' %}
 					start_cycle => get_archive_wrf_file => convert_wrf_file => write_run_namelist
 {% endif %}
@@ -46,8 +53,8 @@
 {% if RIVER_MODEL == 'NEURAL_NET' and FORECAST %}
 					start_cycle => wrf_archive_trigger <wrf::cycle_finished> & update_river_model & softlink_forcing => generate_rivers 
 
-					generate_rivers:failed => trigger_archive_wrf & write_empty_river_nml
-					generate_rivers:succeeded => !trigger_archive_wrf & !write_empty_river_nml
+					wrf_archive_trigger <wrf::cycle_finished>:failed | generate_rivers:failed => write_empty_river_nml
+					generate_rivers:succeeded => !write_empty_river_nml
 					generate_rivers:succeeded | write_empty_river_nml => mv_river_files => write_river_number
 
 					write_run_namelist => write_river_number => run_fvcom
@@ -206,7 +213,7 @@
 		inherit = remote_job
 	[[softlink_forcing]]
 	[[softlink_forcing_remote]]
-        inherit = slurm_job_1
+	        inherit = slurm_job_1
 	
 	[[wrf_suite_trigger]]
 		script =""
@@ -247,12 +254,20 @@
 			interval = PT1M
 			max-polls = 1440
 		[[[job]]]
-			execution retry delays = 3*PT15M
-	
+			execution retry delays = 3*PT15M	
 	[[get_archive_wrf_file]]
 		inherit = remote_job
 	[[convert_wrf_file]]
 		inherit = slurm_job_1
+	[[adjust_namelist_met]]
+		inherit = remote_job
+                script = """
+                        sed -i "s|.*AIRPRESSURE_ON.*|AIRPRESSURE_ON=F,|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
+                        sed -i "s|.*HEATING_ON.*|HEATING_ON=F,|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
+                        sed -i "s|.*RECIPITATION_ON.*|PRECIPITATION_ON=F,|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
+			sed -i "s|.*WIND_ON.*|WIND_ON=T,|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
+			"""
+
 
 	[[update_river_model]]
 	[[generate_rivers]]
@@ -266,14 +281,9 @@
 				NO_RIVERS=$(grep "&NML_RIVER" ${ROSE_DATAC}/${GRID_NAME}_riv.nml | wc -l);
 				sed -i "s|.*RIVER_NUMBER.*| RIVER_NUMBER  = ${NO_RIVERS},|" ${ROSE_DATAC}/${GRID_NAME}_run.nml
 				"""
-	[[trigger_archive_wrf]]
-                script = """
-                        echo "Get the dates missing from the river model and pass to the wrf archive run" 
-                        """
-
 	[[write_empty_river_nml]]
 		script = """
-			echo "Make a fake riv.nml and copy to run directory" 
+			touch ${GRID_NAME}_riv.nml; cp ${GRID_NAME}_riv.nml /${REMOTE_TRANSFER_DIR}/
 			"""
 
 	[[run_fvcom]]

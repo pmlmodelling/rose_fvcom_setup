@@ -32,10 +32,10 @@ else:
 
     missing_dates = np.asarray([start_date + dt.timedelta(days=int(this_ind)) for this_ind in np.arange(0, (end_date - start_date).days + 1)])
 
-    for this_missing_loop in np.arange(0, no_miss_loops):
+    for this_missing_loop in np.arange(-1, no_miss_loops):
         new_missing_dates = []
         for this_date in missing_dates:
-            if this_missing_loop > 0:
+            if this_missing_loop >= 0:
                 print('Trying again to fill for {}'.format(this_date))
             else:
                 print(this_date)

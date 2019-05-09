@@ -22,9 +22,9 @@ grid = 'tamar_v2'
 cmems_time_res = 'hi'
 
 
-fvcom_cmems_names = {'salinity':['SAL', 'vosaline'], 'temp':['TEM', 'votemper'],
-                                        'v':['CUR', 'vomecrty'], 'u':['CUR', 'vozocrtx'],
-                                        'zeta':['SSH', 'sossheig']}
+fvcom_cmems_names = {'salinity':['SAL', 'so'], 'temp':['TEM', 'thetao'],
+                                        'v':['CUR', 'vo'], 'u':['CUR', 'uo'],
+                                        'zeta':['SSH', 'zos']}
 
 
 # Modify a donor restart file.
@@ -83,6 +83,9 @@ for this_fvcom, this_var in fvcom_cmems_names.items():
         this_mode = 'nodes'
 
     restart.replace_variable_with_regular(this_fvcom, this_var[1], this_data_reader, constrain_coordinates=True, mode=this_mode)
+
+for this_var in fvcom_cmems_names.keys():
+    setattr(restart.data, this_var, getattr(restart.data,this_var)[np.newaxis,...])
 
 # replace Times as need to be a 26 character array
 restart.time.Times = np.asarray(list(restart.time.Times[0]))[np.newaxis,:]

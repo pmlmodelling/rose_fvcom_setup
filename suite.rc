@@ -18,6 +18,8 @@
 					write_run_namelist => adjust_namelist & generate_CMEMS_start => mv_start_file => run_fvcom
 {% elif COLD_START and BOUNDARY_FORCING == 'NEST_FILE' %}
 					write_run_namelist => adjust_namelist & generate_nest_start => mv_start_file => run_fvcom
+{% else %}
+					transfer_restart => run_fvcom
 {% endif %}
 					"""
 		[[[P1D]]]

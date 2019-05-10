@@ -312,7 +312,7 @@
 			echo "starting forecast cycle"
 			"""
 	[[transfer_restart]]
-		inherit = slurm_job
+		inherit = slurm_job_1
 		script = """
 			ln -s ${ROSE_DATACP1D}/output/${GRID_NAME}_restart_0001.nc ${ROSE_DATAC}/${GRID_NAME}_restart_0001.nc
 			"""

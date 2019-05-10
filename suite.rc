@@ -314,7 +314,7 @@
 	[[transfer_restart]]
 		inherit = slurm_job_1
 		script = """
-			ln -s ${ROSE_DATACP1D}/output/${GRID_NAME}_restart_0001.nc ${ROSE_DATAC}/${GRID_NAME}_restart_0001.nc
+			ln -sf ${ROSE_DATACP1D}/output/${GRID_NAME}_restart_0001.nc ${ROSE_DATAC}/${GRID_NAME}_restart_0001.nc
 			"""
 	[[nan_check]]
 		inherit = remote_job

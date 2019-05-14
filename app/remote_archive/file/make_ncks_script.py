@@ -7,7 +7,7 @@ import PyFVCOM as pf
 fvcom_output_path = sys.argv[1]
 fvcom_grid_name = sys.argv[2]
 start_date = dt.datetime.strptime(sys.argv[3], '%Y-%m-%d')
-end_date = dt.datetime.strptime(sys.argv[4], '%Y-%m-%d')
+end_date = dt.datetime.strptime(sys.argv[4], '%Y-%m-%d') - dt.timedelta(days=1)
 
 date_list = pf.utilities.time.date_range(start_date, end_date)
 

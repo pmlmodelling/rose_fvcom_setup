@@ -7,9 +7,9 @@ import sys
 import PyFVCOM as pf
 
 """
-cmems_data_dir = '/data/sthenno1/backup/mbe/Data/CMEMS'
-start_date = dt.datetime(2018,9,26)
-end_date = dt.datetime(2018,9,27)
+cmems_data_dir = '/data/sthenno1/scratch/modop/Data/CMEMS'
+start_date = dt.datetime(2019,4,30)
+end_date = dt.datetime(2019,5,2)
 grid = 'tamar_v2_grd.dat'
 sigma_file = 'sigma_gen.dat'
 native_coordinates = 'cartesian'
@@ -41,9 +41,9 @@ aqua_prep.add_nests(4)
 aqua_prep.add_nests_harmonics(fvcom_harmonics, harmonics_vars=['u', 'v', 'ua', 'va', 'zeta'], constituents=constituents, pool_size=20)
 
 # Make the regular readers for the CMEMS data
-fvcom_cmems_names = {'salinity':['SAL', 'vosaline'], 'temp':['TEM', 'votemper'],
-					'v':['CUR', 'vomecrty'], 'u':['CUR', 'vozocrtx'],
-					'zeta':['SSH', 'sossheig']}
+fvcom_cmems_names = {'salinity':['SAL', 'so'], 'temp':['TEM', 'thetao'],
+                                        'v':['CUR', 'vo'], 'u':['CUR', 'uo'],
+                                        'zeta':['SSH', 'zos']}
 
 dt_list = [start_date + dt.timedelta(days = int(i)) for i in np.arange(-1, (end_date - start_date).days + 2)]
 datestr_list = [this_date.strftime('%Y%m%d') for this_date in dt_list]

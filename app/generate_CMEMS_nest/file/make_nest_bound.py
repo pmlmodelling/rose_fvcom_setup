@@ -26,6 +26,8 @@ sigma_file = sys.argv[5]
 native_coordinates = sys.argv[6]
 fvcom_harmonics = sys.argv[7]
 interval = 1/float(sys.argv[8])
+adjust_tides = sys.argv[9].split(',')
+
 
 constituents = ['M2', 'S2']
 output_file = 'boundary_nest.nc'.format(grid)
@@ -82,4 +84,4 @@ for this_fvcom, this_var in fvcom_cmems_names.items():
 aqua_prep.avg_nest_force_vel()
 
 # Write the forcing file 
-aqua_prep.write_nested_forcing(output_file, adjust_tides=['zeta', 'u', 'v', 'ua', 'va'])
+aqua_prep.write_nested_forcing(output_file, adjust_tides=adjust_tides)

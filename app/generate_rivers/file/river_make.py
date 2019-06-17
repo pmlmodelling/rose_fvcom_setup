@@ -14,7 +14,6 @@ end_date = dt.datetime.strptime(sys.argv[4],'%Y-%m-%d_%H:%M:%S')
 native_coordinates = sys.argv[5]
 wrf_nc_file_str = sys.argv[6]
 
-
 # Load the river model
 with open('river_model.pk1','rb') as f:
     river_dict = pk.load(f)

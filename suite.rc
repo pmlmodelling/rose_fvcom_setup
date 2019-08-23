@@ -24,7 +24,7 @@
 					transfer_restart => run_fvcom
 {% endif %}
 					"""
-		[[[P1D]]]
+		[[[P{{CYCLE_FREQ}}D]]]
 			graph = """
 					run_fvcom[-P1D] =>  start_cycle => softlink_forcing  & softlink_forcing_remote => write_run_namelist
 
@@ -82,12 +82,12 @@
 
 
 					"""
-		[[[+P1D/P1D]]]
+		[[[+P{{CYCLE_FREQ}}D/P{{CYCLE_FREQ}}D]]]
 			graph = """
 					run_fvcom[-P1D] => transfer_restart => run_fvcom
 					"""
 
-                [[[+P2D/P1D]]]
+                [[[+P{{CYCLE_FREQ}}D/P{{CYCLE_FREQ}}D]]]
                         graph = """
                                         run_fvcom => housekeeping
                                         """

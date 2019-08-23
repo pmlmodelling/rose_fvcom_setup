@@ -6,8 +6,6 @@
 module purge
 module load nco
 
-set -eu
-
 files=($(\ls raw_wrf_file*))
 
 # Now convert to FVCOM forcing files. These files have all had their first
@@ -18,12 +16,12 @@ files=($(\ls raw_wrf_file*))
 
 n=0
 for this_file in "${files[@]}"; do
-	((n++))
 	echo ${this_file}
-	./wrf_to_fvcom_ceto -i ${this_file} -o wnd_file_${n}.nc -latitude 55.0
+	wrf_to_fvcom_ceto -i ${this_file} -o wnd_file_${n}.nc -latitude 55.0
 	ncrcat -O -h wnd_file_${n}.nc wnd_file_trim_${n}.nc	
 	rm ${this_file}
 	rm wnd_file_${n}.nc
+	((n++))
 done
 
 ncrcat -O -h $(\ls -1 wnd_file_trim*.nc | sort -u) wnd_file.nc

@@ -13,6 +13,12 @@ start_date = dt.datetime.strptime(sys.argv[2], '%Y-%m-%d')
 grid = sys.argv[3]
 donor_filepath = sys.argv[4]
 
+try:
+    amm_7 = sys.argv[5]
+except:
+    amm_7 = False
+
+
 """
 cmems_data_dir = '/data/sthenno1/scratch/modop/Data/CMEMS'
 start_date = dt.datetime(2019,1,15)
@@ -21,8 +27,12 @@ grid = 'tamar_v2'
 
 cmems_time_res = 'hi'
 
-
-fvcom_cmems_names = {'salinity':['SAL', 'so'], 'temp':['TEM', 'thetao'],
+if amm_7:
+    fvcom_cmems_names = {'salinity':['SAL', 'vosaline'], 'temp':['TEM', 'votemper'],
+    				        'v':['CUR', 'vomecrty'], 'u':['CUR', 'vozocrtx'],
+					'zeta':['SSH', 'sossheig']}
+else:
+    fvcom_cmems_names = {'salinity':['SAL', 'so'], 'temp':['TEM', 'thetao'],
                                         'v':['CUR', 'vo'], 'u':['CUR', 'uo'],
                                         'zeta':['SSH', 'zos']}
 

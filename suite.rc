@@ -98,7 +98,7 @@
 		env-script = eval $(rose task-env --cycle-offset=P1D)
 		script = rose task-run --verbose
 		[[[job]]]
-			execution time limit = PT3H
+			execution time limit = PT{{EXECUTION_TIME_LIMIT}}H
 		[[[events]]]
 			mail events = submission timeout, execution timeout, failed
 			mail to = {{MAIL_TO}}

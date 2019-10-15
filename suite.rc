@@ -316,7 +316,7 @@
 	[[mv_start_file]]
 		inherit = remote_job
 	[[transfer_data]]
-		inherit = slurm_job_1
+		inherit = remote_job
 	[[transfer_data_today]]
 		inherit = slurm_job_1
 	[[start_cycle]]

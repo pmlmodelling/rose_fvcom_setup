@@ -26,7 +26,7 @@
 					"""
 		[[[P{{CYCLE_FREQ}}D]]]
 			graph = """
-					run_fvcom[-P1D] =>  start_cycle => softlink_forcing  & softlink_forcing_remote => write_run_namelist
+					run_fvcom[-P{{CYCLE_FREQ}}D] =>  start_cycle => softlink_forcing  & softlink_forcing_remote => write_run_namelist
 
 {% if FORECAST and (WIND_ON == 'T' or HEATING_ON == 'T' or PRECIPITATION_ON == 'T' or AIR_PRESSURE_ON == 'T') %}
 					start_cycle => wrf_suite_trigger <wrf::transfer_for_fvcom> 
@@ -84,7 +84,7 @@
 					"""
 		[[[+P{{CYCLE_FREQ}}D/P{{CYCLE_FREQ}}D]]]
 			graph = """
-					run_fvcom[-P1D] => transfer_restart => run_fvcom
+					run_fvcom[-P{{CYCLE_FREQ}}D] => transfer_restart => run_fvcom
 					"""
 
                 [[[+P{{CYCLE_FREQ}}D/P{{CYCLE_FREQ}}D]]]

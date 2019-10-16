@@ -95,7 +95,7 @@
 
 [runtime]
 	[[root]]
-		env-script = eval $(rose task-env --cycle-offset=P1D)
+		env-script = eval $(rose task-env --cycle-offset=P{{CYCLE_FREQ}}D)
 		script = rose task-run --verbose
 		[[[job]]]
 			execution time limit = PT{{EXECUTION_TIME_LIMIT}}H
@@ -326,9 +326,9 @@
 	[[transfer_restart]]
 		inherit = remote_job
 		script = """
-			ln -sf ${ROSE_DATACP1D}/output/${GRID_NAME}_restart_0001.nc ${ROSE_DATAC}/${GRID_NAME}_restart_0001.nc
+			ln -sf ${ROSE_DATACP{{CYCLE_FREQ}}D}/output/${GRID_NAME}_restart_0001.nc ${ROSE_DATAC}/${GRID_NAME}_restart_0001.nc
 			mkdir -p /pml${RESTART_ARCHIVE_DIR}/${FORECAST_DAY}
-			cp ${ROSE_DATACP1D}/output/${GRID_NAME}_restart_0001.nc /pml${RESTART_ARCHIVE_DIR}/${FORECAST_DAY}/
+			cp ${ROSE_DATACP{{CYCLE_FREQ}}D}/output/${GRID_NAME}_restart_0001.nc /pml${RESTART_ARCHIVE_DIR}/${FORECAST_DAY}/
 			"""
 	[[transfer_archive_restart]]
 		inherit = remote_job

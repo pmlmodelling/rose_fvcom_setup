@@ -27,11 +27,14 @@ native_coordinates = sys.argv[6]
 fvcom_harmonics = sys.argv[7]
 interval = 1/float(sys.argv[8])
 adjust_tides = sys.argv[9].split(',')
-
+no_nests = int(sys.argv[10])
 
 constituents = ['M2', 'S2']
 output_file = 'boundary_nest.nc'.format(grid)
 cmems_time_res = 'hi'
+
+if 'None' in adjust_tides:
+    adjust_tides = []
 
 ##############################################################################################
 # Setup preproc Model object
@@ -39,7 +42,7 @@ aqua_prep = pf.preproc.Model(start_date, end_date, grid, native_coordinates, zon
 aqua_prep.add_sigma_coordinates(sigma_file)
 
 # Make the nested boundary object
-aqua_prep.add_nests(4)
+aqua_prep.add_nests(no_nests)
 aqua_prep.add_nests_harmonics(fvcom_harmonics, harmonics_vars=['u', 'v', 'ua', 'va', 'zeta'], constituents=constituents, pool_size=20)
 
 # Make the regular readers for the CMEMS data

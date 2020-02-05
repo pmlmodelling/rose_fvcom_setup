@@ -87,7 +87,7 @@
 					run_fvcom[-P1D] => transfer_restart => run_fvcom
 					"""
 
-                [[[+P2D/P1D]]]
+                [[[+P3D/P1D]]]
                         graph = """
                                         run_fvcom => housekeeping
                                         """
@@ -126,6 +126,7 @@
 			NEST_RUN_SUITE={{NEST_RUN_SUITE}}
 			NEST_INTERVAL={{NEST_INTERVAL}}
 			ADJUST_TIDES={{ADJUST_TIDES}}
+			NO_NESTS={{NEST_DEPTH}}
 
 			EXT_TSTEP={{EXT_TSTEP}}
 			ISPLIT={{ISPLIT}}
@@ -174,12 +175,15 @@
 {% endif %}
 
 
-{% if BOUNDARY_FORCING in ['CMEMS', 'NEST_FILE'] %}
+{% if BOUNDARY_FORCING in ['CMEMS', 'NEST_FILE'] and NEST_DEPTH == 1 %}
                         NEST_ON='T'
-			NEST_TYPE='3'
+			NEST_TYPE='1'
+{% elif BOUNDARY_FORCING in ['CMEMS', 'NEST_FILE'] %}
+                        NEST_ON='T'
+                        NEST_TYPE='3'
 {% else %}
-                        NEST_ON='T'
-			NEST_TYPE='3'
+                        NEST_ON='F'
+			NEST_TYPE='1'
 {% endif %}
 
 

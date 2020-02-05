@@ -28,6 +28,10 @@ fvcom_harmonics = sys.argv[7]
 interval = 1/float(sys.argv[8])
 adjust_tides = sys.argv[9].split(',')
 no_nests = int(sys.argv[10])
+try:
+    amm_7 = sys.argv[11]
+except:
+    amm_7 = False
 
 constituents = ['M2', 'S2']
 output_file = 'boundary_nest.nc'.format(grid)
@@ -46,7 +50,12 @@ aqua_prep.add_nests(no_nests)
 aqua_prep.add_nests_harmonics(fvcom_harmonics, harmonics_vars=['u', 'v', 'ua', 'va', 'zeta'], constituents=constituents, pool_size=20)
 
 # Make the regular readers for the CMEMS data
-fvcom_cmems_names = {'salinity':['SAL', 'so'], 'temp':['TEM', 'thetao'],
+if amm_7:
+    fvcom_cmems_names = {'salinity':['SAL', 'vosaline'], 'temp':['TEM', 'votemper'],
+					'v':['CUR', 'vomecrty'], 'u':['CUR', 'vozocrtx'],
+					'zeta':['SSH', 'sossheig']}
+else:
+    fvcom_cmems_names = {'salinity':['SAL', 'so'], 'temp':['TEM', 'thetao'],
                                         'v':['CUR', 'vo'], 'u':['CUR', 'uo'],
                                         'zeta':['SSH', 'zos']}
 

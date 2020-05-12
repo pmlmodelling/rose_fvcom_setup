@@ -22,6 +22,4 @@ for i, this_date in enumerate(date_list):
 
     this_out_filestr = '{}_{}.nc'.format(fvcom_grid_name, this_date.strftime('%Y-%m-%d'))
     with open('make_daily_nc.sh', 'a') as f:
-        f.write('ncks -d time,{},{} {} {} \n'.format(np.squeeze(time_ind[0]), np.squeeze(time_ind[1]), this_filestr, this_out_filestr))
-
-    
+        f.write('ncks -d time,{},{} {} {} \n'.format(np.squeeze(time_ind[0]), np.squeeze(time_ind[1]), this_filestr, this_out_filestr))    

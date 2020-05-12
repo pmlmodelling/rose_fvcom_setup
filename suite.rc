@@ -74,7 +74,7 @@
 {% endif %}
 
 {% if FORECAST %} 
-					write_run_namelist => run_fvcom => transfer_data => transfer_data_today => remote_archive => clean_output
+					write_run_namelist => run_fvcom => transfer_data => transfer_data_today => remote_archive => clean_output & hindcast_files
 {% else %}
 					write_run_namelist => run_fvcom => transfer_data => clean_output
 {% endif %}
@@ -87,7 +87,7 @@
 					run_fvcom[-P1D] => transfer_restart => run_fvcom
 					"""
 
-                [[[+P2D/P1D]]]
+                [[[+P3D/P1D]]]
                         graph = """
                                         run_fvcom => housekeeping
                                         """
@@ -112,6 +112,8 @@
 			END_DAY=$(rose date --offset=P{{FORECAST_DAYS|int}}D --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
 
 			FORECAST_DAY=$(rose date --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
+			ARCHIVE_DATE=$(rose date --offset=-P{{2*HINDCAST_DAYS|int}}D --print-format='%Y-%m-%d %H:%M:%S' $CYLC_TASK_CYCLE_POINT)
+			HINDCAST_DAYS={{HINDCAST_DAYS}}
 
 			GRID_NAME={{GRID_NAME}}
 			RIVER_MODEL_PATH={{RIVER_MODEL_PATH}}
@@ -351,4 +353,4 @@
                 script = """
                         rm ${ROSE_DATACP2D}/output/${GRID_NAME}_restart_0001.nc
                         """
-
+	[[hindcast_files]]

@@ -51,8 +51,16 @@ else:
                 wrf_dt_date = np.asarray([this_dt.date() for this_dt in wrf_dt]) 
 
                 date_match = wrf_dt_date == this_date.date()
+                first_date_ind = np.min(np.where(date_match))
+                last_date_ind = np.max(np.where(date_match)) + 1
+                
+                if first_date_ind > 0:
+                    rain_diff = this_wrf_nc.variables['RAINNC'][:][first_date_ind:last_date_ind,:,:]- this_wrf_nc.variables['RAINNC'][:][first_date_ind-1:last_date_ind-1,:,:]
+                else:
+                    rain_diff_part = this_wrf_nc.variables['RAINNC'][:][first_date_ind+1:last_date_ind,:,:]- this_wrf_nc.variables['RAINNC'][:][first_date_ind:last_date_ind-1,:,:]
+                    rain_diff = np.vstack([this_wrf_nc.variables['RAINNC'][:][first_date_ind,:,:][np.newaxis,:,:], rain_diff_part]) 
 
-                forecast_data = {'times': wrf_dt[date_match], 'RAINNC': this_wrf_nc.variables['RAINNC'][date_match,:,:],
+                forecast_data = {'times': wrf_dt[date_match], 'RAINNC': rain_diff,
                                     'T2': this_wrf_nc.variables['T2'][date_match,:,:]}
                 this_wrf_nc.close()
 
@@ -69,7 +77,7 @@ else:
                             this_river.catchment_precipitation = this_river.river_obj.catchment_precipitation
             except:
                 new_missing_dates.append(this_date)
-            missing_dates = new_missing_dates[:]            
+            missing_dates = new_missing_dates[:] 
 
     with open('river_model.pk1','wb') as f:
         pk.dump(river_dict, f, pk.HIGHEST_PROTOCOL)

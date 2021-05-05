@@ -18,6 +18,8 @@ try:
 except:
     amm_7 = False
 
+amm_7 = False
+
 
 """
 cmems_data_dir = '/data/sthenno1/scratch/modop/Data/CMEMS'

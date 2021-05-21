@@ -13,6 +13,8 @@ date_list = pf.utilities.time.date_range(start_date, end_date)
 
 with open('make_daily_nc.sh', 'w') as f:
     f.write('#!/bin/bash \n')
+    f.write('module purge \n')
+    f.write('module load nco \n')
 
 this_filestr = '{}/{}_0001.nc'.format(fvcom_output_path,fvcom_grid_name)
 this_fr = pf.read.FileReader(this_filestr)

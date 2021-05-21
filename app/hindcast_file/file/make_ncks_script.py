@@ -5,9 +5,13 @@ import sys
 import PyFVCOM as pf
 
 file_to_archive = sys.argv[1]
+print('File to archive: {}'.format(file_to_archive))
 fvcom_grid_name = sys.argv[2]
+print('Grid name: {}'.format(fvcom_grid_name))
 archive_dir = sys.argv[3]
+print('Target dir: {}'.format(archive_dir))
 hindcast_days = int(sys.argv[4])
+print('Hindcast days: {}'.format(hindcast_days))
 
 with open('make_daily_nc.sh', 'w') as f:
     f.write('#!/bin/bash \n')

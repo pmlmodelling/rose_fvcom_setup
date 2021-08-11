@@ -29,10 +29,13 @@ for this_obj in river_dict.values():
 if wrf_nc_file_str != 'hindcast':
     forecast_nc = nc.Dataset(wrf_nc_file_str, 'r')
 
-    wrf_vars = ['RAINNC', 'T2', 'Times'] 
+    wrf_vars = ['T2', 'Times'] 
     forecast_data = {}
     for this_var in wrf_vars:
-        forecast_data[this_var] = forecast_nc.variables[this_var][:]  
+        forecast_data[this_var] = forecast_nc.variables[this_var][1:,...]  
+
+    rain_diff = forecast_nc.variables['RAINNC'][1:,...] - forecast_nc.variables['RAINNC'][0:-1,...]
+    forecast_data['RAINNC'] = rain_diff
 
     date_str_raw = [b''.join(this_date_raw) for this_date_raw in forecast_data['Times']]
     forecast_data['times'] = np.asarray([dt.datetime.strptime(this_date_str.decode('utf-8'), '%Y-%m-%d_%H:%M:%S') for this_date_str in date_str_raw])

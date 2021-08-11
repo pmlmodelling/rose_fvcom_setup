@@ -36,6 +36,9 @@
 					wrf_suite_trigger <wrf::transfer_for_fvcom>:failed & write_run_namelist => adjust_namelist_met
 					(wrf_suite_trigger <wrf::transfer_for_fvcom>:succeeded & write_run_namelist) | adjust_namelist_met => run_fvcom
 
+{% elif CATCHUP and (WIND_ON == 'T' or HEATING_ON == 'T' or PRECIPITATION_ON == 'T' or AIR_PRESSURE_ON == 'T') %}
+                                        start_cycle => softlink_forcing_remote => get_wrf_file
+                                        get_wrf_file => write_run_namelist => run_fvcom
 
 {% elif WIND_ON == 'T' or HEATING_ON == 'T' or PRECIPITATION_ON == 'T' or AIR_PRESSURE_ON == 'T' %}
 					start_cycle => get_archive_wrf_file => write_run_namelist
@@ -62,6 +65,11 @@
 					generate_rivers:succeeded | write_empty_river_nml => mv_river_files => write_river_number
 
 					write_run_namelist => write_river_number => run_fvcom
+{% elif RIVER_MODEL == 'NEURAL_NET' and CATCHUP %}
+                                        start_cycle => update_river_model & softlink_forcing => generate_rivers 
+                                        generate_rivers => mv_river_files => write_river_number
+                                        write_run_namelist => write_river_number => run_fvcom
+
 {% elif RIVER_MODEL == 'NEURAL_NET' %}
 					softlink_forcing => generate_rivers => mv_river_files
 					mv_river_files & write_run_namelist => write_river_number => run_fvcom
@@ -73,7 +81,7 @@
 					write_cstms_namelist => run_fvcom
 {% endif %}
 
-{% if FORECAST %} 
+{% if FORECAST or CATCHUP %} 
 					write_run_namelist => run_fvcom => transfer_data => transfer_data_today => remote_archive => clean_output & hindcast_files
 {% else %}
 					write_run_namelist => run_fvcom => transfer_data => clean_output

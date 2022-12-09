@@ -17,8 +17,8 @@ files=($(\ls raw_wrf_file*))
 n=0
 for this_file in "${files[@]}"; do
 	echo ${this_file}
-	wrf_to_fvcom_ceto -i ${this_file} -o wnd_file_${n}.nc -latitude 55.0
-	ncrcat -O -h wnd_file_${n}.nc wnd_file_trim_${n}.nc	
+	./wrf_to_fvcom_ceto -i ${this_file} -o wnd_file_${n}.nc -latitude 55.0
+	ncks -d Time,1,8 wnd_file_${n}.nc wnd_file_trim_${n}.nc	
 	rm ${this_file}
 	rm wnd_file_${n}.nc
 	((n++))

@@ -13,6 +13,14 @@ wrf_forecast_out_dir_strfmt = sys.argv[2]
 end_date = dt.datetime.strptime(sys.argv[3],'%Y-%m-%d')
 no_miss_loops = 4
 
+"""
+wrf_forecast_out_dir = '/data/sthenno1/scratch/modop/Model/WRF/output'
+wrf_forecast_out_dir_strfmt = '%Y%m%d'
+end_date = dt.datetime(2021,4,3)
+no_miss_loops = 4
+"""
+
+
 # Load the river model
 with open('river_model.pk1','rb') as f:
     river_dict = pk.load(f)

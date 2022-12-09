@@ -28,7 +28,11 @@
 			graph = """
 					run_fvcom[-P{{CYCLE_FREQ}}D] =>  start_cycle => softlink_forcing  & softlink_forcing_remote => write_run_namelist
 
-{% if FORECAST and (WIND_ON == 'T' or HEATING_ON == 'T' or PRECIPITATION_ON == 'T' or AIR_PRESSURE_ON == 'T') %}
+{% if FORECAST and CATCHUP %}
+                                        start_cycle => softlink_forcing_remote => get_remote_wrf_file
+                                        get_remote_wrf_file => write_run_namelist => run_fvcom
+
+{% elif FORECAST and (WIND_ON == 'T' or HEATING_ON == 'T' or PRECIPITATION_ON == 'T' or AIR_PRESSURE_ON == 'T') %}
 					start_cycle => wrf_suite_trigger <wrf::transfer_for_fvcom> 
 					wrf_suite_trigger <wrf::transfer_for_fvcom>:succeeded & softlink_forcing_remote => get_wrf_file
 					wrf_suite_trigger <wrf::transfer_for_fvcom>:failed | get_wrf_file => write_run_namelist
@@ -36,17 +40,19 @@
 					wrf_suite_trigger <wrf::transfer_for_fvcom>:failed & write_run_namelist => adjust_namelist_met
 					(wrf_suite_trigger <wrf::transfer_for_fvcom>:succeeded & write_run_namelist) | adjust_namelist_met => run_fvcom
 
-{% elif CATCHUP and (WIND_ON == 'T' or HEATING_ON == 'T' or PRECIPITATION_ON == 'T' or AIR_PRESSURE_ON == 'T') %}
-                                        start_cycle => softlink_forcing_remote => get_wrf_file
-                                        get_wrf_file => write_run_namelist => run_fvcom
-
-{% elif WIND_ON == 'T' or HEATING_ON == 'T' or PRECIPITATION_ON == 'T' or AIR_PRESSURE_ON == 'T' %}
+{% elif WRF_MERGE_FILES and (WIND_ON == 'T' or HEATING_ON == 'T' or PRECIPITATION_ON == 'T' or AIR_PRESSURE_ON == 'T') %}
 					start_cycle => get_archive_wrf_file => write_run_namelist
+{% elif WIND_ON == 'T' or HEATING_ON == 'T' or PRECIPITATION_ON == 'T' or AIR_PRESSURE_ON == 'T' %}
+                                        start_cycle => get_old_forecast_wrf_file => write_run_namelist
 {% endif %}
 
 
 {% if BOUNDARY_FORCING == 'TIDAL' %}
 					start_cycle => generate_tide_forcing => write_run_namelist
+
+{% elif BOUNDARY_FORCING == 'CMEMS' and CATCHUP %}
+                                        start_cycle => generate_CMEMS_nest => copy_CMEMS_nest_to_remote => write_run_namelist
+
 {% elif BOUNDARY_FORCING == 'CMEMS' and FORECAST %}
 					start_cycle => CMEMS_download_trigger <download::get_CMEMS_data:finish> => generate_CMEMS_nest => copy_CMEMS_nest_to_remote => write_run_namelist
 
@@ -57,7 +63,14 @@
 					start_cycle => nest_suite_trigger<{{NEST_RUN_SUITE}}::transfer_data> => get_nest_file => write_run_namelist
 {% endif %}
 
-{% if RIVER_MODEL == 'NEURAL_NET' and FORECAST %}
+
+
+{% if RIVER_MODEL == 'NEURAL_NET' and CATCHUP %}
+                                        start_cycle => update_river_model & softlink_forcing & make_today_wrf => generate_rivers 
+                                        generate_rivers => mv_river_files => write_river_number
+                                        write_run_namelist => write_river_number => run_fvcom
+
+{% elif RIVER_MODEL == 'NEURAL_NET' and FORECAST %}
 					start_cycle => wrf_archive_trigger <wrf::cycle_finished> & update_river_model & softlink_forcing => generate_rivers 
 
 					wrf_archive_trigger <wrf::cycle_finished>:failed | generate_rivers:failed => write_empty_river_nml
@@ -65,10 +78,6 @@
 					generate_rivers:succeeded | write_empty_river_nml => mv_river_files => write_river_number
 
 					write_run_namelist => write_river_number => run_fvcom
-{% elif RIVER_MODEL == 'NEURAL_NET' and CATCHUP %}
-                                        start_cycle => update_river_model & softlink_forcing => generate_rivers 
-                                        generate_rivers => mv_river_files => write_river_number
-                                        write_run_namelist => write_river_number => run_fvcom
 
 {% elif RIVER_MODEL == 'NEURAL_NET' %}
 					softlink_forcing => generate_rivers => mv_river_files
@@ -82,7 +91,7 @@
 {% endif %}
 
 {% if FORECAST or CATCHUP %} 
-					write_run_namelist => run_fvcom => transfer_data => transfer_data_today => remote_archive => clean_output & hindcast_files
+					write_run_namelist => run_fvcom => transfer_data => transfer_data_today => remote_archive => clean_output
 {% else %}
 					write_run_namelist => run_fvcom => transfer_data => clean_output
 {% endif %}
@@ -95,10 +104,6 @@
 					run_fvcom[-P{{CYCLE_FREQ}}D] => transfer_restart => run_fvcom
 					"""
 
-                [[[+P{{CYCLE_FREQ}}D/P{{CYCLE_FREQ}}D]]]
-                        graph = """
-                                        run_fvcom => housekeeping
-                                        """
 
 
 [runtime]
@@ -114,13 +119,19 @@
 		[[[environment]]]
 			START_DATE=$(rose date --offset=-P{{HINDCAST_DAYS|int}}D --print-format='%Y-%m-%d %H:%M:%S' $CYLC_TASK_CYCLE_POINT)
 			END_DATE=$(rose date --offset=P{{FORECAST_DAYS|int}}D --print-format='%Y-%m-%d %H:%M:%S' $CYLC_TASK_CYCLE_POINT)
+			TEMP_END=$(rose date --offset=P{{FORECAST_DAYS-1|int}}D --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
 			START_DATE_STR=$(rose date --offset=-P{{HINDCAST_DAYS|int}}D --print-format='%Y-%m-%d_%H:%M:%S' $CYLC_TASK_CYCLE_POINT)
 			END_DATE_STR=$(rose date --offset=P{{FORECAST_DAYS|int}}D --print-format='%Y-%m-%d_%H:%M:%S' $CYLC_TASK_CYCLE_POINT)
 			START_DAY=$(rose date --offset=-P{{HINDCAST_DAYS|int}}D --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
 			END_DAY=$(rose date --offset=P{{FORECAST_DAYS|int}}D --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
 
 			FORECAST_DAY=$(rose date --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
+			
+{% if HINDCAST_DAYS > 0 %}
 			ARCHIVE_DATE=$(rose date --offset=-P{{2*HINDCAST_DAYS-1|int}}D --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
+{% else %}		
+			ARCHIVE_DATE=$(rose date --offset=-P1D --print-format='%Y-%m-%d' $CYLC_TASK_CYCLE_POINT)
+{% endif %}
 			HINDCAST_DAYS={{HINDCAST_DAYS|int}}
 
 			GRID_NAME={{GRID_NAME}}
@@ -172,7 +183,9 @@
                         WRF_ARCHIVE_DATESTR=$(rose date --print-format={{WRF_ARCHIVE_DATEFMT}} $CYLC_TASK_CYCLE_POINT)
 			RESTART_ARCHIVE_DIR={{RESTART_ARCHIVE_DIR}}
 
-{% if FORECAST %}
+{% if FORECAST and CATCHUP %}
+			TODAY_WRF_FILE=/{{WRF_ARCHIVE_DIR}}/hindcast_temp/today_wrf.nc
+{% elif FORECAST %}
                         TODAY_WRF_FILE=/{{WRF_ARCHIVE_DIR}}/today/today_wrfout.nc
 {% else %}
 			TODAY_WRF_FILE='hindcast'
@@ -208,6 +221,7 @@
 			--ntasks-per-node=20
 			--threads-per-core=1
 			--time=24:00:00
+			--priority=low
 {% if USE_CETO %}
 		[[[remote]]]
 			host = login.ceto.npm.ac.uk
@@ -285,7 +299,11 @@
 			max-polls = 1440
 		[[[job]]]
 			execution retry delays = 3*PT15M	
+        [[get_remote_wrf_file]]
+                inherit = remote_job
 	[[get_archive_wrf_file]]
+		inherit = remote_job
+	[[get_old_forecast_wrf_file]]
 		inherit = remote_job
 	[[convert_wrf_file]]
 		inherit = slurm_job_1
@@ -366,4 +384,5 @@
                 script = """
                         rm ${ROSE_DATACP2D}/output/${GRID_NAME}_restart_0001.nc
                         """
-	[[hindcast_file]]
+	[[hindcast_files]]
+	[[make_today_wrf]]
